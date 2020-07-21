@@ -13,23 +13,34 @@ const { Client } = require('pg');
 
     connection.connect();
 
-    const queryStr = `
-    CREATE TABLE users (
-        email varchar,
-        firstName varchar,
-        lastName varchar,
-        age int
-    );
-`;
+    const checkTableQueryStr = `
+        SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE  table_name   = 'users'
+        );
+    `;
 
-    try {
-        await connection.query(queryStr);
-        console.log('Table Created Successfully');
-    } catch (e) {
-        console.log('Something Went Wrong');
-        throw e;
-    } finally {
-        connection.end();
+    const response = await connection.query(checkTableQueryStr);
+
+    if (!response.rows[0].exists) { //this checks whether the table is already created
+        const queryStr = `
+        CREATE TABLE users (
+            email varchar,
+            firstName varchar,
+            lastName varchar,
+            age int
+        );
+    `;
+
+        try {
+            await connection.query(queryStr);
+            console.log('Table Created Successfully');
+        } catch (e) {
+            console.log('Something Went Wrong');
+            throw e;
+        } finally {
+            connection.end();
+        }
     }
 })();
 

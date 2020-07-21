@@ -17,9 +17,19 @@ connection.on('error', (err, success) => {
 
 (async () => {
 
-    await connection.connect();
+    const client = await connection.connect();
 
-    const queryStr = `
+    const checkTableQueryStr = `
+        SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE  table_name   = 'employees'
+        );
+    `;
+
+    const response = await client.query(checkTableQueryStr);
+
+    if (!response.rows[0].exists) { //this checks whether the table is already created
+        const queryStr = `
     CREATE TABLE employees (
         email varchar,
         firstName varchar,
@@ -28,12 +38,13 @@ connection.on('error', (err, success) => {
     );
 `;
 
-    try {
-        await connection.query(queryStr);
-        console.log('Table Created Successfully');
-    } catch (e) {
-        console.log('Something Went Wrong');
-        throw e;
+        try {
+            await client.query(queryStr);
+            console.log('Table Created Successfully');
+        } catch (e) {
+            console.log('Something Went Wrong');
+            throw e;
+        }
     }
 })();
 
